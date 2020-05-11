@@ -1,0 +1,8 @@
+- model: simple_model
+  description: simple model
+  operations:
+    train:
+      description: train model
+      main: train_and_check
+      requires:
+        - file: data

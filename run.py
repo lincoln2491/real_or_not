@@ -20,11 +20,6 @@ pd.set_option('display.max_columns', 20)
 MAX_SIZE = 33
 EMPTY_WORD = '<EMPTY>'
 
-
-def extend_y(y):
-    return [0] * y[0] + [1] * (y[1] - y[0] + 1) + [0] * (MAX_SIZE - y[1] - 1)
-
-
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 print(device)
 
