@@ -18,6 +18,8 @@ from real_or_not.training import train_model
 import numpy as np
 
 # parameters
+from real_or_not.utils import clear_text
+
 LEARNING_RATE = 0.01
 EPOCHS = 1
 USE_EMPTY_WORD = True
@@ -37,6 +39,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if OWN_EMBEDDINGS:
     empty_word = '<EMPTY>'
     train_df = pd.read_csv('data/train.csv', keep_default_na=False)
+    train_df.text = train_df.apply(clear_text)
     train_df.text = train_df.text.str.split()
     max_size = train_df.text.apply(len).max()
     predict_df = pd.read_csv('data/test.csv', keep_default_na=False)

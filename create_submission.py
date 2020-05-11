@@ -42,9 +42,16 @@ all_worlds_flat = [item for sublist in all_words for item in sublist]
 
 le = LabelEncoder()
 words_labeled = le.fit_transform(all_worlds_flat)
-
-with open('data/train.pickle', 'rb') as f:
-    train_x = pickle.load(f)
+train_x = []
+for i, sentence in enumerate(all_words):
+    if i % 100 == 0:
+        print(datetime.now(), i / len(all_words) * 100)
+    labeled_sentence = le.transform(sentence)
+    train_x.append(labeled_sentence)
+with open('data/train.pickle', 'wb') as f:
+    pickle.dump(train_x, f)
+# with open('data/train.pickle', 'rb') as f:
+#     train_x = pickle.load(f)
 train_y = train_df.target.tolist()
 
 train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, train_size=0.66, random_state=6)
@@ -68,25 +75,25 @@ all_words_predict = [t + [empty_word] * (max_size - len(t)) for t in all_words_p
 vocab_size = le.classes_.__len__() + 1
 
 predict_x = []
-# for i, sentence in enumerate(all_words_predict):
-#     if i % 1000 == 0:
-#         print(datetime.now(), i / len(all_words_predict) * 100)
-#     try:
-#         labeled_sentence = le.transform(sentence)
-#     except:
-#         labeled_sentence = []
-#         for word in sentence:
-#             try:
-#                 labeled_word = le.transform([word])[0]
-#             except:
-#                 labeled_word = vocab_size - 1
-#             labeled_sentence.append(labeled_word)
-#     predict_x.append(labeled_sentence)
-#     with open('data/test.pickle', 'wb') as f:
-#         pickle.dump(predict_x, f)
+for i, sentence in enumerate(all_words_predict):
+    if i % 1000 == 0:
+        print(datetime.now(), i / len(all_words_predict) * 100)
+    try:
+        labeled_sentence = le.transform(sentence)
+    except:
+        labeled_sentence = []
+        for word in sentence:
+            try:
+                labeled_word = le.transform([word])[0]
+            except:
+                labeled_word = vocab_size - 1
+            labeled_sentence.append(labeled_word)
+    predict_x.append(labeled_sentence)
+    with open('data/test.pickle', 'wb') as f:
+        pickle.dump(predict_x, f)
 
-with open('data/test.pickle', 'rb') as f:
-    predict_x = pickle.load(f)
+# with open('data/test.pickle', 'rb') as f:
+#     predict_x = pickle.load(f)
 predict_ds = TextDataset(predict_x)
 predict_loader = DataLoader(predict_ds)
 all_scores = []
