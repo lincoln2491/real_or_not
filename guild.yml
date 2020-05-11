@@ -6,3 +6,8 @@
       main: train_and_check
       requires:
         - file: data
+    make_submission:
+      desctiption: making submission
+      main: create_submission
+      requires:
+        - file: data
