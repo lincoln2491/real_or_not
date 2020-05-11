@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from real_or_not.TextDataset import TextDataset
 from real_or_not.models.SimpleModel import SimpleModel
 from real_or_not.training import train_model
+import numpy as np
 
 LEARNING_RATE = 0.01
 EPOCHS = 1
@@ -20,6 +21,11 @@ BATCH_SIZE = 4
 OWN_EMBEDDINGS = True
 EMBEDDINGS_DIMENSION = 20
 HIDDEN_DIMENSION = 10
+
+torch.manual_seed(6)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+np.random.seed(6)
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
