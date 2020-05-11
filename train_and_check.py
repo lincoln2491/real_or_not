@@ -1,8 +1,6 @@
 import pickle
-from datetime import datetime
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import torch
 from sklearn.metrics import f1_score
@@ -16,6 +14,9 @@ from real_or_not.TextDataset import TextDataset
 from real_or_not.models.SimpleModel import SimpleModel
 
 # parameters
+from real_or_not.testing import predict_on_model
+from real_or_not.training import train_model
+
 LEARNING_RATE = 0.01
 EPOCHS = 1
 USE_EMPTY_WORD = True
@@ -68,66 +69,15 @@ net = SimpleModel(vocab_size, max_size, EMBEDDINGS_DIMENSION, HIDDEN_DIMENSION)
 net.to(device)
 loss_function = CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE)
-for epoch in range(EPOCHS):
-    print(f'{datetime.now()}: epoch {epoch}')
-    for i, (sentences, targets) in enumerate(train_loader):
-        if i % 1000 == 0:
-            print(f'{datetime.now()}: {((i * BATCH_SIZE) / len(train_ds)) * 100}')
-        sentences = sentences.to(device)
-        targets = targets.to(device)
-        optimizer.zero_grad()
 
-        tag_scores = net(sentences)
+train_model(net, train_loader, val_loader, EPOCHS, loss_function, optimizer, BATCH_SIZE, device, train_ds)
 
-        loss = loss_function(tag_scores, targets)
-        # print(loss)
-        loss.backward()
-        optimizer.step()
-    with torch.no_grad():
-        train_predicted = []
-        val_predicted = []
-        train_actual = []
-        val_actual = []
-        for sentences, targets in train_loader:
-            sentences = sentences.to(device)
-            tag_scores = net(sentences)
-            train_predicted.extend(tag_scores.cpu().numpy())
-            train_actual.extend(targets.numpy())
-        for sentences, targets in val_loader:
-            sentences = sentences.to(device)
-            tag_scores = net(sentences)
-            val_predicted.extend(tag_scores.cpu().numpy())
-            val_actual.extend(targets.numpy())
-        train_predicted = np.array(train_predicted)
-        val_predicted = np.array(val_predicted)
-        train_predicted = train_predicted.argmax(axis=1)
-        val_predicted = val_predicted.argmax(axis=1)
-        print(
-            f'epoch: {epoch}: train loss {f1_score(train_actual, train_predicted)} val loss {f1_score(val_actual, val_predicted)}')
+# validate
 
-# validate and save model
+train_actual, train_predicted = predict_on_model(net, train_loader, device)
+val_actual, val_predicted = predict_on_model(net, val_loader, device)
 
-
-with torch.no_grad():
-    train_predicted = []
-    val_predicted = []
-    train_actual = []
-    val_actual = []
-    for sentences, targets in train_loader:
-        sentences = sentences.to(device)
-        tag_scores = net(sentences)
-        train_predicted.extend(tag_scores.cpu().numpy())
-        train_actual.extend(targets.numpy())
-    for sentences, targets in val_loader:
-        sentences = sentences.to(device)
-        tag_scores = net(sentences)
-        val_predicted.extend(tag_scores.cpu().numpy())
-        val_actual.extend(targets.numpy())
-    train_predicted = np.array(train_predicted)
-    val_predicted = np.array(val_predicted)
-    train_predicted = train_predicted.argmax(axis=1)
-    val_predicted = val_predicted.argmax(axis=1)
-    train_f1_score = f1_score(train_actual, train_predicted)
-    val_f1_score = f1_score(val_actual, val_predicted)
-    print(f'train_f1: {train_f1_score}')
-    print(f'val_f1: {val_f1_score}')
+train_f1_score = f1_score(train_actual, train_predicted)
+val_f1_score = f1_score(val_actual, val_predicted)
+print(f'train_f1: {train_f1_score}')
+print(f'val_f1: {val_f1_score}')
