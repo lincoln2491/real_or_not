@@ -5,17 +5,23 @@ import torch.nn.functional as F
 
 class SimpleModel(nn.Module):
 
-    def __init__(self, vocabulary_size, sentence_length, embedding_dimension, hidden_dimmension):
+    def __init__(self, vocabulary_size, sentence_length, embedding_dimension, hidden_dimmension, num_layers,
+                 bidirectional):
         super(SimpleModel, self).__init__()
         self.vocabulary_size = vocabulary_size
         self.sentence_length = sentence_length
         self.embedding_dimension = embedding_dimension
         self.hidden_dimension = hidden_dimmension
 
-        self.word_embeddings = nn.Embedding(self.vocabulary_size, self.embedding_dimension)
-        self.lstm = nn.LSTM(self.embedding_dimension, self.hidden_dimension, batch_first=True)
-
+        self.word_embeddings = nn.Embedding(self.vocabulary_size + 1, self.embedding_dimension,
+                                            padding_idx=-1)
+        self.lstm = nn.LSTM(self.embedding_dimension, self.hidden_dimension, batch_first=True, num_layers=num_layers,
+                            bidirectional=bidirectional)
         self.fc1 = nn.Linear(self.hidden_dimension * self.sentence_length, 2)
+
+    def initialize_weights(self, weights, pad_id):
+        self.word_embeddings = nn.Embedding.from_pretrained(torch.tensor(weights, dtype=torch.float32), freeze=True,
+                                                            padding_idx=pad_id)
 
     def forward(self, x):
         # print('f-sentence', x.size())

@@ -11,6 +11,7 @@ from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 
 from real_or_not.TextDataset import TextDataset
+from real_or_not.glove_mapper import GloveMapper
 from real_or_not.models.SimpleModel import SimpleModel
 
 from real_or_not.testing import predict_on_model
@@ -21,12 +22,14 @@ import numpy as np
 from real_or_not.utils import clear_text
 
 LEARNING_RATE = 0.01
-EPOCHS = 1
+EPOCHS = 100
 USE_EMPTY_WORD = True
 BATCH_SIZE = 4
-OWN_EMBEDDINGS = True
-EMBEDDINGS_DIMENSION = 20
+OWN_EMBEDDINGS = False
+EMBEDDINGS_DIMENSION = 50
 HIDDEN_DIMENSION = 10
+NUM_LSTM_LAYERS = 1
+BIDIRECTIONAL = False
 # setup
 torch.manual_seed(6)
 torch.backends.cudnn.deterministic = True
@@ -35,19 +38,20 @@ np.random.seed(6)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # read and transform data
-
+train_df = pd.read_csv('data/train.csv', keep_default_na=False)
+train_df.text = train_df.text.apply(clear_text)
+train_df.text = train_df.text.str.split()
+max_size = train_df.text.apply(len).max()
 if OWN_EMBEDDINGS:
     empty_word = '<EMPTY>'
-    train_df = pd.read_csv('data/train.csv', keep_default_na=False)
-    train_df.text = train_df.apply(clear_text)
-    train_df.text = train_df.text.str.split()
+
     max_size = train_df.text.apply(len).max()
     predict_df = pd.read_csv('data/test.csv', keep_default_na=False)
     le = LabelEncoder()
 
-    all_words = train_df.text.to_list()
-    all_words = [t + [empty_word] * (max_size - len(t)) for t in all_words]
-    all_worlds_flat = [item for sublist in all_words for item in sublist]
+    all_sentences = train_df.text.to_list()
+    all_sentences = [t + [empty_word] * (max_size - len(t)) for t in all_sentences]
+    all_worlds_flat = [item for sublist in all_sentences for item in sublist]
 
     le = LabelEncoder()
     words_labeled = le.fit_transform(all_worlds_flat)
@@ -71,8 +75,25 @@ if OWN_EMBEDDINGS:
     val_ds = TextDataset(val_x, val_y)
     val_loader = DataLoader(val_ds, BATCH_SIZE, shuffle=False, num_workers=2)
 
+else:
+    gm = GloveMapper('data/glove.6B', EMBEDDINGS_DIMENSION)
+    all_sentences = train_df.text.to_list()
+    all_possible_words = list(set([item for sublist in all_sentences for item in sublist]))
+    weight_matrix, pad_id = gm.adjust(all_possible_words)
+    vocab_size = pad_id + 1
+    train_x = gm.convert_data_set(all_sentences, max_size)
+    train_y = train_df.target.tolist()
+    train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, train_size=0.66, random_state=6)
+    train_ds = TextDataset(train_x, train_y)
+    train_loader = DataLoader(train_ds, BATCH_SIZE, shuffle=True, num_workers=2)
+    val_ds = TextDataset(val_x, val_y)
+    val_loader = DataLoader(val_ds, BATCH_SIZE, shuffle=False, num_workers=2)
+
 # train model
-net = SimpleModel(vocab_size, max_size, EMBEDDINGS_DIMENSION, HIDDEN_DIMENSION)
+net = SimpleModel(vocab_size, max_size, EMBEDDINGS_DIMENSION, HIDDEN_DIMENSION, NUM_LSTM_LAYERS, BIDIRECTIONAL)
+if not OWN_EMBEDDINGS:
+    net.initialize_weights(weight_matrix, pad_id)
+
 net.to(device)
 loss_function = CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE)

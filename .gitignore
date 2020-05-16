@@ -4,3 +4,4 @@ check.py
 data
 *pyc
 .guild
+.vector_cache
