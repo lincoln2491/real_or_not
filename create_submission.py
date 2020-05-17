@@ -1,26 +1,26 @@
-import pickle
 from datetime import datetime
 
-import pandas as pd
+import numpy as np
 import torch
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 from torch import optim
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 
 from real_or_not.TextDataset import TextDataset
+from real_or_not.glove_mapper import GloveMapper
 from real_or_not.models.SimpleModel import SimpleModel
 from real_or_not.training import train_model
-import numpy as np
+from real_or_not.utils import get_datasets, preprocess_dataset, get_dataloader
 
 LEARNING_RATE = 0.01
-EPOCHS = 1
+EPOCHS = 100
 USE_EMPTY_WORD = True
 BATCH_SIZE = 4
-OWN_EMBEDDINGS = True
-EMBEDDINGS_DIMENSION = 20
+OWN_EMBEDDINGS = False
+EMBEDDINGS_DIMENSION = 50
 HIDDEN_DIMENSION = 10
+NUM_LSTM_LAYERS = 1
+BIDIRECTIONAL = False
 
 torch.manual_seed(6)
 torch.backends.cudnn.deterministic = True
@@ -29,73 +29,36 @@ np.random.seed(6)
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-empty_word = '<EMPTY>'
-train_df = pd.read_csv('data/train.csv', keep_default_na=False)
-train_df.text = train_df.text.str.split()
+train_df, predict_df = get_datasets()
+train_df = preprocess_dataset(train_df)
+predict_df = preprocess_dataset(predict_df)
+
 max_size = train_df.text.apply(len).max()
-predict_df = pd.read_csv('data/test.csv', keep_default_na=False)
-le = LabelEncoder()
-
-all_words = train_df.text.to_list()
-all_words = [t + [empty_word] * (max_size - len(t)) for t in all_words]
-all_worlds_flat = [item for sublist in all_words for item in sublist]
-
-le = LabelEncoder()
-words_labeled = le.fit_transform(all_worlds_flat)
-train_x = []
-for i, sentence in enumerate(all_words):
-    if i % 100 == 0:
-        print(datetime.now(), i / len(all_words) * 100)
-    labeled_sentence = le.transform(sentence)
-    train_x.append(labeled_sentence)
-with open('data/train.pickle', 'wb') as f:
-    pickle.dump(train_x, f)
-# with open('data/train.pickle', 'rb') as f:
-#     train_x = pickle.load(f)
+gm = GloveMapper('data/glove.6B', EMBEDDINGS_DIMENSION)
+all_sentences = train_df.text.to_list()
+all_possible_words = list(set([item for sublist in all_sentences for item in sublist]))
+gm.adjust(all_possible_words)
+weight_matrix = gm.weights_matrix
+pad_id = gm.get_pad_id()
+vocab_size = pad_id + 1
+train_x = gm.convert_data_set(all_sentences, max_size)
 train_y = train_df.target.tolist()
+train_loader = get_dataloader(train_x, train_y, BATCH_SIZE, True)
 
-train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, train_size=0.66, random_state=6)
-vocab_size = le.classes_.__len__() + 1
-train_ds = TextDataset(train_x, train_y)
-train_loader = DataLoader(train_ds, BATCH_SIZE, shuffle=True, num_workers=2)
-val_ds = TextDataset(val_x, val_y)
-val_loader = DataLoader(val_ds, BATCH_SIZE, shuffle=False, num_workers=2)
+predict_x = gm.convert_data_set(predict_df.text, max_size)
 
-net = SimpleModel(vocab_size, max_size, EMBEDDINGS_DIMENSION, HIDDEN_DIMENSION)
+predict_loader = get_dataloader(predict_x, None, BATCH_SIZE, False)
+
+
+net = SimpleModel(vocab_size, max_size, EMBEDDINGS_DIMENSION, HIDDEN_DIMENSION, NUM_LSTM_LAYERS, BIDIRECTIONAL)
+if not OWN_EMBEDDINGS:
+    net.initialize_weights(weight_matrix, pad_id)
 net.to(device)
 loss_function = CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=LEARNING_RATE)
 
-train_model(net, train_loader, val_loader, EPOCHS, loss_function, optimizer, BATCH_SIZE, device, train_ds)
-empty_word = '<EMPTY>'
-predict_df.text = predict_df.text.str.split()
-all_words_predict = predict_df.text.to_list()
-all_words_predict = [t + [empty_word] * (max_size - len(t)) for t in all_words_predict]
+train_model(net, train_loader, None, EPOCHS, loss_function, optimizer, device)
 
-vocab_size = le.classes_.__len__() + 1
-
-predict_x = []
-for i, sentence in enumerate(all_words_predict):
-    if i % 1000 == 0:
-        print(datetime.now(), i / len(all_words_predict) * 100)
-    try:
-        labeled_sentence = le.transform(sentence)
-    except:
-        labeled_sentence = []
-        for word in sentence:
-            try:
-                labeled_word = le.transform([word])[0]
-            except:
-                labeled_word = vocab_size - 1
-            labeled_sentence.append(labeled_word)
-    predict_x.append(labeled_sentence)
-    with open('data/test.pickle', 'wb') as f:
-        pickle.dump(predict_x, f)
-
-# with open('data/test.pickle', 'rb') as f:
-#     predict_x = pickle.load(f)
-predict_ds = TextDataset(predict_x)
-predict_loader = DataLoader(predict_ds)
 all_scores = []
 with torch.no_grad():
     for i, sentences in enumerate(predict_loader):

@@ -7,7 +7,7 @@ import bcolz
 
 class GloveMapper:
     __UNKNOWN_TOKEN__ = '<unk>'
-    PAD_TOKEN = '<pad>'
+    __PAD_TOKEN__ = '<pad>'
 
     # __PAD_ID__ = -1
 
@@ -62,9 +62,12 @@ class GloveMapper:
         self.__mapper_word_to_idx__[self.__UNKNOWN_TOKEN__] = curr_id
         curr_id += 1
         weights_matrix.append([0] * self.__embedding_dim__)
-        self.__mapper_word_to_idx__[self.PAD_TOKEN] = curr_id
+        self.__mapper_word_to_idx__[self.__PAD_TOKEN__] = curr_id
         self.__adjusted__ = True
-        return np.array(weights_matrix), self.__mapper_word_to_idx__[self.PAD_TOKEN]
+        self.weights_matrix = np.array(weights_matrix)
+
+    def get_pad_id(self):
+        return self.__mapper_word_to_idx__[self.__PAD_TOKEN__]
 
     def convert_data_set(self, sentences, max_size):
         # TODO create own error
@@ -74,7 +77,7 @@ class GloveMapper:
         converted_data_set = []
         for sentence in sentences:
             new_sentence = [self.__mapper_word_to_idx__.get(word, unknown_id) for word in sentence]
-            new_sentence = new_sentence + [self.__mapper_word_to_idx__[self.PAD_TOKEN]] * (max_size - len(new_sentence))
+            new_sentence = new_sentence + [self.__mapper_word_to_idx__[self.__PAD_TOKEN__]] * (max_size - len(new_sentence))
             converted_data_set.append(new_sentence)
 
         return converted_data_set
