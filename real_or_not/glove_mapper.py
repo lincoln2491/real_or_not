@@ -6,14 +6,14 @@ import bcolz
 
 
 class GloveMapper:
-    __UNKNOWN_TOKEN__ = '<unk>'
-    __PAD_TOKEN__ = '<pad>'
+    _UNKNOWN_TOKEN = '<unk>'
+    _PAD_TOKEN = '<pad>'
 
     # __PAD_ID__ = -1
 
     def __init__(self, glove_root_path, dim):
-        self.__adjusted__ = False
-        self.__embedding_dim__ = dim
+        self._adjusted = False
+        self._embedding_dim = dim
         glove_cache_path = os.path.join(glove_root_path, f'6B.{dim}.dat')
         glove_embeddings_path = os.path.join(glove_root_path, f'glove.6B.{dim}d.txt')
         glove_words_path = os.path.join(glove_root_path, f'6b.{dim}_words.pkl')
@@ -43,41 +43,42 @@ class GloveMapper:
             words = pickle.load(open(glove_words_path, 'rb'))
             word_2_idx = pickle.load(open(glove_words_2_idx_path, 'rb'))
 
-        self.__glove__ = {w: vectors[word_2_idx[w]] for w in words}
-        self.__glove_word_2_idx__ = word_2_idx
+        self._glove = {w: vectors[word_2_idx[w]] for w in words}
+        self._glove_word_2_idx = word_2_idx
 
     def adjust(self, all_possible_words):
         # TODO how to handle unknown  words
-        self.__mapper_word_to_idx__ = {}
+        self._mapper_word_to_idx = {}
         weights_matrix = []
         curr_id = 0
         for word in all_possible_words:
             try:
-                weights_matrix.append(self.__glove__[word])
-                self.__mapper_word_to_idx__[word] = curr_id
+                weights_matrix.append(self._glove[word])
+                self._mapper_word_to_idx[word] = curr_id
                 curr_id += 1
             except KeyError:
                 pass
-        weights_matrix.append(self.__glove__[self.__UNKNOWN_TOKEN__])
-        self.__mapper_word_to_idx__[self.__UNKNOWN_TOKEN__] = curr_id
+        weights_matrix.append(self._glove[self._UNKNOWN_TOKEN])
+        self._mapper_word_to_idx[self._UNKNOWN_TOKEN] = curr_id
         curr_id += 1
-        weights_matrix.append([0] * self.__embedding_dim__)
-        self.__mapper_word_to_idx__[self.__PAD_TOKEN__] = curr_id
-        self.__adjusted__ = True
+        weights_matrix.append([0] * self._embedding_dim)
+        self._mapper_word_to_idx[self._PAD_TOKEN] = curr_id
+        self._adjusted = True
         self.weights_matrix = np.array(weights_matrix)
 
     def get_pad_id(self):
-        return self.__mapper_word_to_idx__[self.__PAD_TOKEN__]
+        return self._mapper_word_to_idx[self._PAD_TOKEN]
 
     def convert_data_set(self, sentences, max_size):
         # TODO create own error
-        if not self.__adjusted__:
+        if not self._adjusted:
             raise ValueError('mapper not adjusted')
-        unknown_id = self.__mapper_word_to_idx__[self.__UNKNOWN_TOKEN__]
+        unknown_id = self._mapper_word_to_idx[self._UNKNOWN_TOKEN]
         converted_data_set = []
         for sentence in sentences:
-            new_sentence = [self.__mapper_word_to_idx__.get(word, unknown_id) for word in sentence]
-            new_sentence = new_sentence + [self.__mapper_word_to_idx__[self.__PAD_TOKEN__]] * (max_size - len(new_sentence))
+            new_sentence = [self._mapper_word_to_idx.get(word, unknown_id) for word in sentence]
+            new_sentence = new_sentence + [self._mapper_word_to_idx[self._PAD_TOKEN]] * (
+                    max_size - len(new_sentence))
             converted_data_set.append(new_sentence)
 
         return converted_data_set

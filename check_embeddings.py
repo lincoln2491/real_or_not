@@ -12,9 +12,9 @@ gl = GloveMapper('data/glove.twitter.27B', 50)
 
 all_words = train_df.text.to_list()
 all_worlds_flat = [item for sublist in all_words for item in sublist]
-tmp = [gl.__glove__.__contains__(k) for k in all_worlds_flat]
+tmp = [gl._glove.__contains__(k) for k in all_worlds_flat]
 print(Counter(tmp))
 all_worlds_flat = list(set(all_worlds_flat))
-tmp = [gl.__glove__.__contains__(k) for k in all_worlds_flat]
+tmp = [gl._glove.__contains__(k) for k in all_worlds_flat]
 print(Counter(tmp))
-tmp =  [k for k in all_worlds_flat if not gl.__glove__.__contains__(k)]
+tmp =  [k for k in all_worlds_flat if not gl._glove.__contains__(k)]
