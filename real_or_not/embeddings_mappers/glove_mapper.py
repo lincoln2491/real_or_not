@@ -4,16 +4,14 @@ import pickle
 import numpy as np
 import bcolz
 
+from real_or_not.embeddings_mappers.abstract_mapper import AbstractMapper
 
-class GloveMapper:
-    _UNKNOWN_TOKEN = '<unk>'
-    _PAD_TOKEN = '<pad>'
 
-    # __PAD_ID__ = -1
+class GloveMapper(AbstractMapper):
+
 
     def __init__(self, glove_root_path, dim):
-        self._adjusted = False
-        self._embedding_dim = dim
+        super().__init__(dim)
         glove_cache_path = os.path.join(glove_root_path, f'6B.{dim}.dat')
         glove_embeddings_path = os.path.join(glove_root_path, f'glove.6B.{dim}d.txt')
         glove_words_path = os.path.join(glove_root_path, f'6b.{dim}_words.pkl')
@@ -66,19 +64,6 @@ class GloveMapper:
         self._adjusted = True
         self.weights_matrix = np.array(weights_matrix)
 
-    def get_pad_id(self):
-        return self._mapper_word_to_idx[self._PAD_TOKEN]
 
-    def convert_data_set(self, sentences, max_size):
-        # TODO create own error
-        if not self._adjusted:
-            raise ValueError('mapper not adjusted')
-        unknown_id = self._mapper_word_to_idx[self._UNKNOWN_TOKEN]
-        converted_data_set = []
-        for sentence in sentences:
-            new_sentence = [self._mapper_word_to_idx.get(word, unknown_id) for word in sentence]
-            new_sentence = new_sentence + [self._mapper_word_to_idx[self._PAD_TOKEN]] * (
-                    max_size - len(new_sentence))
-            converted_data_set.append(new_sentence)
 
-        return converted_data_set
+

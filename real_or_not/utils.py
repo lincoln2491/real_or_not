@@ -5,8 +5,8 @@ import unidecode
 from torch.utils.data import DataLoader
 
 from real_or_not.TextDataset import TextDataset
-from real_or_not.glove_mapper import GloveMapper
-from real_or_not.models.SimpleModel import SimpleModel
+from real_or_not.embeddings_mappers.glove_mapper import GloveMapper
+from real_or_not.embeddings_mappers.own_embeddings_mapper import OwnEmbeddingsMapper
 
 
 def clear_text(text):
@@ -29,12 +29,10 @@ def preprocess_dataset(dataset):
     return dataset
 
 
-def create_glove_mapper(dataset, glove_path, embedding_dim):
-    gm = GloveMapper(glove_path, embedding_dim)
-    all_sentences = dataset.text.to_list()
-    all_possible_words = list(set([item for sublist in all_sentences for item in sublist]))
-    gm.adjust(all_possible_words)
-    return gm
+def get_mapper(own_embeddings, dim, all_possible_words):
+    mapper = OwnEmbeddingsMapper(dim) if own_embeddings else GloveMapper('data/glove.6B', dim)
+    mapper.adjust(all_possible_words)
+    return mapper
 
 
 def get_dataloader(x, y, batch_size, is_train):

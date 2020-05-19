@@ -1,8 +1,8 @@
 from collections import Counter
 
-from real_or_not.glove_mapper import GloveMapper
 import pandas as pd
 
+from real_or_not.embeddings_mappers.glove_mapper import GloveMapper
 from real_or_not.utils import clear_text
 
 train_df = pd.read_csv('data/train.csv', keep_default_na=False)
@@ -17,4 +17,4 @@ print(Counter(tmp))
 all_worlds_flat = list(set(all_worlds_flat))
 tmp = [gl._glove.__contains__(k) for k in all_worlds_flat]
 print(Counter(tmp))
-tmp =  [k for k in all_worlds_flat if not gl._glove.__contains__(k)]
+tmp = [k for k in all_worlds_flat if not gl._glove.__contains__(k)]

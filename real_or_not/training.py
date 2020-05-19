@@ -3,7 +3,6 @@ from datetime import datetime
 from sklearn.metrics import f1_score
 
 from real_or_not.testing import predict_on_model
-import pandas as pd
 
 
 def train_model(net, train_loader, val_loader, epochs, loss_function, optimizer, device):
@@ -23,6 +22,6 @@ def train_model(net, train_loader, val_loader, epochs, loss_function, optimizer,
         if val_loader is not None:
             val_actual, val_predicted = predict_on_model(net, val_loader, device)
             print(
-                f'epoch: {epoch}: train loss {f1_score(train_actual, train_predicted)} val loss {f1_score(val_actual, val_predicted)}')
+                f'epoch {epoch} train loss {f1_score(train_actual, train_predicted)} val loss {f1_score(val_actual, val_predicted)}')
         else:
             print(f'epoch: {epoch}: train loss {f1_score(train_actual, train_predicted)}F')
