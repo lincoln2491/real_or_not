@@ -19,6 +19,7 @@ EMBEDDINGS_DIMENSION = 50
 HIDDEN_DIMENSION = 10
 NUM_LSTM_LAYERS = 1
 BIDIRECTIONAL = False
+USE_ALL_WORDS_FOR_EMBEDDINGS = True
 
 # SETUP
 torch.manual_seed(6)
@@ -36,7 +37,11 @@ max_size = train_df.text.apply(len).max()
 train_df, val_df = train_test_split(train_df, train_size=0.66, random_state=6)
 
 # MAP WORDS TO EMBEDDINGS
-all_possible_words = list(set([item for sublist in train_df.text.to_list() for item in sublist]))
+if USE_ALL_WORDS_FOR_EMBEDDINGS:
+    all_possible_words = list(
+        set([item for sublist in (train_df.text.to_list() + val_df.text.to_list()) for item in sublist]))
+else:
+    all_possible_words = list(set([item for sublist in train_df.text.to_list() for item in sublist]))
 
 mapper = get_mapper(OWN_EMBEDDINGS, EMBEDDINGS_DIMENSION, all_possible_words)
 vocab_size = mapper.get_pad_id() + 1
@@ -67,5 +72,5 @@ val_actual, val_predicted = predict_on_model(net, val_loader, device)
 
 train_f1_score = f1_score(train_actual, train_predicted)
 val_f1_score = f1_score(val_actual, val_predicted)
-print(f'train_f1: {train_f1_score}')
-print(f'val_f1: {val_f1_score}')
+print(f'final_train_f1: {train_f1_score}')
+print(f'final_val_f1: {val_f1_score}')

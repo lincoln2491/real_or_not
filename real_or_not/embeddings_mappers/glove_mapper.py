@@ -1,14 +1,13 @@
 import os
 import pickle
 
-import numpy as np
 import bcolz
+import numpy as np
 
 from real_or_not.embeddings_mappers.abstract_mapper import AbstractMapper
 
 
 class GloveMapper(AbstractMapper):
-
 
     def __init__(self, glove_root_path, dim):
         super().__init__(dim)
@@ -63,7 +62,3 @@ class GloveMapper(AbstractMapper):
         self._mapper_word_to_idx[self._PAD_TOKEN] = curr_id
         self._adjusted = True
         self.weights_matrix = np.array(weights_matrix)
-
-
-
-

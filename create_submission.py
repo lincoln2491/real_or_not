@@ -17,6 +17,7 @@ EMBEDDINGS_DIMENSION = 50
 HIDDEN_DIMENSION = 10
 NUM_LSTM_LAYERS = 1
 BIDIRECTIONAL = False
+USE_ALL_WORDS_FOR_EMBEDDINGS = True
 
 # SETUP
 torch.manual_seed(6)
@@ -32,7 +33,11 @@ predict_df = preprocess_dataset(predict_df)
 max_size = train_df.text.apply(len).max()
 
 # MAP WORDS TO EMBEDDINGS
-all_possible_words = list(set([item for sublist in train_df.text.to_list() for item in sublist]))
+if USE_ALL_WORDS_FOR_EMBEDDINGS:
+    all_possible_words = list(
+        set([item for sublist in (train_df.text.to_list() + predict_df.text.to_list()) for item in sublist]))
+else:
+    all_possible_words = list(set([item for sublist in train_df.text.to_list() for item in sublist]))
 
 mapper = get_mapper(OWN_EMBEDDINGS, EMBEDDINGS_DIMENSION, all_possible_words)
 vocab_size = mapper.get_pad_id() + 1

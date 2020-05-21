@@ -11,7 +11,8 @@ from real_or_not.embeddings_mappers.own_embeddings_mapper import OwnEmbeddingsMa
 
 def clear_text(text):
     text = text.lower()
-    text = re.sub(r'http\S+', '', text)
+    text = re.sub(r'http\S+', 'url', text)
+    text = re.sub(r'@[a-zA-Z0-9_]*', 'username', text)
     text = unidecode.unidecode(text)
     text = text.translate(str.maketrans(string.punctuation, ' ' * len(string.punctuation)))
     return text
