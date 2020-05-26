@@ -31,7 +31,7 @@ class GloveMapper(AbstractMapper):
                     idx += 1
                     vect = np.array(line[1:]).astype(np.float)
                     vectors.append(vect)
-            vectors = bcolz.carray(vectors[1:].reshape((400001, 50)), rootdir=glove_cache_path, mode='w')
+            vectors = bcolz.carray(vectors[1:].reshape((400001, dim)), rootdir=glove_cache_path, mode='w')
             vectors.flush()
             pickle.dump(words, open(glove_words_path, 'wb'))
             pickle.dump(word_2_idx, open(glove_words_2_idx_path, 'wb'))

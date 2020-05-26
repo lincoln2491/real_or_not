@@ -5,3 +5,4 @@ data
 *pyc
 .guild
 .vector_cache
+run_grid_search.sh

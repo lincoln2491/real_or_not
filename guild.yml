@@ -1,5 +1,5 @@
-- model: simple_model
-  description: simple model
+- model: real_or_not_model
+  description: model for real or not kaggle competition
   operations:
     train:
       description: train model

@@ -17,7 +17,9 @@ class SimpleModel(nn.Module):
                                             padding_idx=-1)
         self.lstm = nn.LSTM(self.embedding_dimension, self.hidden_dimension, batch_first=True, num_layers=num_layers,
                             bidirectional=bidirectional)
-        self.fc1 = nn.Linear(self.hidden_dimension * self.sentence_length, 2)
+
+        self.multiplier = 2 if bidirectional else 1
+        self.fc1 = nn.Linear(self.hidden_dimension * self.sentence_length * self.multiplier, 2)
 
     def initialize_weights(self, weights, pad_id):
         self.word_embeddings = nn.Embedding.from_pretrained(torch.tensor(weights, dtype=torch.float32), freeze=True,
@@ -27,11 +29,10 @@ class SimpleModel(nn.Module):
         # print('f-sentence', x.size())
         x = self.word_embeddings(x)
         # print('f-emb', x.size())
-        # x = x.view(self.sentence_length, -1, self.embedding_dimension)
         # print('f-view', x.size())
         x, _ = self.lstm(x)
         # print('f-lstm', x.size())
-        x = x.reshape(-1, self.hidden_dimension * self.sentence_length)
+        x = x.reshape(-1, self.hidden_dimension * self.sentence_length * self.multiplier)
         # print('f-view', x.size())
         x = self.fc1(x)
         # print('f-fc1', x.size())
