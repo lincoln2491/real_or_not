@@ -3,7 +3,7 @@ import torch
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from torch import optim
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, BCEWithLogitsLoss
 
 from real_or_not.models.SimpleModel import SimpleModel
 from real_or_not.testing import predict_on_model
@@ -11,15 +11,17 @@ from real_or_not.training import train_model
 from real_or_not.utils import get_datasets, preprocess_dataset, get_dataloader, get_mapper
 
 # PARAMETERS
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 EPOCHS = 100
 BATCH_SIZE = 4
 OWN_EMBEDDINGS = False
 EMBEDDINGS_DIMENSION = 50
 HIDDEN_DIMENSION = 10
 NUM_LSTM_LAYERS = 1
-BIDIRECTIONAL = False
+BIDIRECTIONAL = True
 USE_ALL_WORDS_FOR_EMBEDDINGS = True
+FREEZE_EMBEDDINGS = True
+USE_DROPOUT = False
 
 # SETUP
 torch.manual_seed(6)
@@ -55,9 +57,10 @@ val_y = val_df.target.tolist()
 val_loader = get_dataloader(val_x, val_y, BATCH_SIZE, False)
 
 # SETUP TRAINING
-net = SimpleModel(vocab_size, max_size, EMBEDDINGS_DIMENSION, HIDDEN_DIMENSION, NUM_LSTM_LAYERS, BIDIRECTIONAL)
+net = SimpleModel(vocab_size, max_size, EMBEDDINGS_DIMENSION, HIDDEN_DIMENSION, NUM_LSTM_LAYERS, BIDIRECTIONAL,
+                  USE_DROPOUT)
 if not OWN_EMBEDDINGS:
-    net.initialize_weights(mapper.weights_matrix, mapper.get_pad_id())
+    net.initialize_weights(mapper.weights_matrix, mapper.get_pad_id(), FREEZE_EMBEDDINGS)
 
 net.to(device)
 loss_function = CrossEntropyLoss()

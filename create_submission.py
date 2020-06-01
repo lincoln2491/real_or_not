@@ -18,6 +18,8 @@ HIDDEN_DIMENSION = 10
 NUM_LSTM_LAYERS = 1
 BIDIRECTIONAL = True
 USE_ALL_WORDS_FOR_EMBEDDINGS = True
+FREEZE_EMBEDDINGS = True
+USE_DROPOUT = False
 
 # SETUP
 torch.manual_seed(6)
@@ -50,9 +52,10 @@ predict_x = mapper.convert_data_set(predict_df.text, max_size)
 predict_loader = get_dataloader(predict_x, None, BATCH_SIZE, False)
 
 # SETUP TRAINING
-net = SimpleModel(vocab_size, max_size, EMBEDDINGS_DIMENSION, HIDDEN_DIMENSION, NUM_LSTM_LAYERS, BIDIRECTIONAL)
+net = SimpleModel(vocab_size, max_size, EMBEDDINGS_DIMENSION, HIDDEN_DIMENSION, NUM_LSTM_LAYERS, BIDIRECTIONAL,
+                  USE_DROPOUT)
 if not OWN_EMBEDDINGS:
-    net.initialize_weights(mapper.weights_matrix, mapper.get_pad_id())
+    net.initialize_weights(mapper.weights_matrix, mapper.get_pad_id(), FREEZE_EMBEDDINGS)
 
 net.to(device)
 loss_function = CrossEntropyLoss()
