@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from real_or_not.TextDataset import TextDataset
 from real_or_not.embeddings_mappers.glove_mapper import GloveMapper
 from real_or_not.embeddings_mappers.own_embeddings_mapper import OwnEmbeddingsMapper
+from real_or_not.embeddings_mappers.twitter_mapper import TwitterMapper
 
 
 def clear_text(text):
@@ -31,7 +32,7 @@ def preprocess_dataset(dataset):
 
 
 def get_mapper(own_embeddings, dim, all_possible_words):
-    mapper = OwnEmbeddingsMapper(dim) if own_embeddings else GloveMapper('data/glove.6B', dim)
+    mapper = OwnEmbeddingsMapper(dim) if own_embeddings else TwitterMapper('data/glove.twitter.27B', dim)
     mapper.adjust(all_possible_words)
     return mapper
 

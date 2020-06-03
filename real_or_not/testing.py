@@ -17,5 +17,5 @@ def predict_on_model(net, dataloader, device, return_probability=False):
             predicted.extend(tag_scores.cpu().numpy())
     predicted = np.array(predicted)
     if not return_probability:
-        predicted = predicted > 0.5
+        predicted = predicted.argmax(axis=1)
     return actual, predicted

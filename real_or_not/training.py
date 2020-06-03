@@ -15,7 +15,7 @@ def train_model(net, train_loader, val_loader, epochs, loss_function, optimizer,
         for i, (sentences, targets) in enumerate(train_loader):
             sentences = sentences.to(device)
             targets = targets.to(device)
-            targets = targets.type(torch.float)
+            # targets = targets.type(torch.float)
             optimizer.zero_grad()
 
             tag_scores = net(sentences)
