@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 
 class AbstractMapper(ABC):
-    _UNKNOWN_TOKEN = '<unknown>'
+    _UNKNOWN_TOKEN = '<unk>'
     _PAD_TOKEN = '<pad>'
 
     def __init__(self, dim):

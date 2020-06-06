@@ -20,7 +20,9 @@ BIDIRECTIONAL = True
 USE_ALL_WORDS_FOR_EMBEDDINGS = True
 FREEZE_EMBEDDINGS = True
 USE_DROPOUT = False
+EMBEDDINGS_TYPE = 'GLOVE'
 
+assert EMBEDDINGS_TYPE in ['GLOVE', 'TWITTER'], 'EMBEDDINGS_TYPE should be GLOVE or TWITTER'
 # SETUP
 torch.manual_seed(6)
 torch.backends.cudnn.deterministic = True
@@ -41,7 +43,7 @@ if USE_ALL_WORDS_FOR_EMBEDDINGS:
 else:
     all_possible_words = list(set([item for sublist in train_df.text.to_list() for item in sublist]))
 
-mapper = get_mapper(OWN_EMBEDDINGS, EMBEDDINGS_DIMENSION, all_possible_words)
+mapper = get_mapper(OWN_EMBEDDINGS, EMBEDDINGS_TYPE, EMBEDDINGS_DIMENSION, all_possible_words)
 vocab_size = mapper.get_pad_id() + 1
 
 train_x = mapper.convert_data_set(train_df.text.to_list(), max_size)

@@ -31,8 +31,12 @@ def preprocess_dataset(dataset):
     return dataset
 
 
-def get_mapper(own_embeddings, dim, all_possible_words):
-    mapper = OwnEmbeddingsMapper(dim) if own_embeddings else TwitterMapper('data/glove.twitter.27B', dim)
+def get_mapper(own_embeddings, embeddings_type, dim, all_possible_words):
+    if own_embeddings:
+        mapper = OwnEmbeddingsMapper(dim)
+    else:
+        mapper = GloveMapper('data/glove.6B', dim) if embeddings_type == 'GLOVE' else TwitterMapper(
+            'data/glove.twitter.27B', dim)
     mapper.adjust(all_possible_words)
     return mapper
 

@@ -8,13 +8,14 @@ from real_or_not.embeddings_mappers.abstract_mapper import AbstractMapper
 
 
 class TwitterMapper(AbstractMapper):
+    _UNKNOWN_TOKEN = '<unknown>'
 
     def __init__(self, glove_root_path, dim):
         super().__init__(dim)
-        glove_cache_path = os.path.join(glove_root_path, f'twitter.27B.{dim}.dat')
+        glove_cache_path = os.path.join(glove_root_path, f'27B.{dim}.dat')
         glove_embeddings_path = os.path.join(glove_root_path, f'glove.twitter.27B.{dim}d.txt')
-        glove_words_path = os.path.join(glove_root_path, f'twitter.27B.{dim}_words.pkl')
-        glove_words_2_idx_path = os.path.join(glove_root_path, f'twitter.27B.{dim}_idx.pkl')
+        glove_words_path = os.path.join(glove_root_path, f'27B.{dim}_words.pkl')
+        glove_words_2_idx_path = os.path.join(glove_root_path, f'27B.{dim}_idx.pkl')
         if not os.path.isdir(glove_cache_path) or \
                 not os.path.isfile(glove_words_path) or \
                 not os.path.isfile(glove_words_2_idx_path):
@@ -31,7 +32,7 @@ class TwitterMapper(AbstractMapper):
                     idx += 1
                     vect = np.array(line[1:]).astype(np.float)
                     vectors.append(vect)
-            vectors = bcolz.carray(vectors[1:].reshape((-1, dim)), rootdir=glove_cache_path, mode='w')
+            vectors = bcolz.carray(vectors[:].reshape((-1, dim)), rootdir=glove_cache_path, mode='w')
             vectors.flush()
             pickle.dump(words, open(glove_words_path, 'wb'))
             pickle.dump(word_2_idx, open(glove_words_2_idx_path, 'wb'))
